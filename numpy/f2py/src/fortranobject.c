@@ -290,7 +290,7 @@ fortran_doc(FortranDataDef def)
             p += n;
             size -= n;
         }
-        
+
     }
     if (size <= 1) {
         goto fail;
@@ -637,14 +637,14 @@ static int check_and_fix_dimensions(const PyArrayObject* arr,
                                     npy_intp *dims);
 
 static int
-count_negative_dimensions(const int rank,
-                          const npy_intp *dims) {
-    int i=0,r=0;
-    while (i<rank) {
-        if (dims[i] < 0) ++r;
-        ++i;
+find_first_negative_dimension(const int rank, const npy_intp *dims)
+{
+    for (int i = 0; i < rank; ++i) {
+        if (dims[i] < 0) {
+            return i;
+        }
     }
-    return r;
+    return -1;
 }
 
 #ifdef DEBUG_COPY_ND_ARRAY
@@ -721,14 +721,12 @@ PyArrayObject* array_from_pyobj(const int type_num,
         || ((intent & F2PY_OPTIONAL) && (obj==Py_None))
         ) {
         /* intent(cache), optional, intent(hide) */
-        if (count_negative_dimensions(rank,dims) > 0) {
-            int i;
-            strcpy(mess, "failed to create intent(cache|hide)|optional array"
-                   "-- must have defined dimensions but got (");
-            for(i=0;i<rank;++i)
-                sprintf(mess+strlen(mess),"%" NPY_INTP_FMT ",",dims[i]);
-            strcat(mess, ")");
-            PyErr_SetString(PyExc_ValueError,mess);
+        int i = find_first_negative_dimension(rank,dims) ;
+        if (i >= 0) {
+            PyErr_Format(PyExc_ValueError, "failed to create intent(cache|hide)|optional array"
+                   "-- must have defined dimensions, but dims[%d] = %"
+                         NPY_INTP_FMT,i,dims[i]);
+
             return NULL;
         }
         arr = (PyArrayObject *)
