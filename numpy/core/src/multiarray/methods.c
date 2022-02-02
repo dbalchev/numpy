@@ -1315,6 +1315,10 @@ array_sort(PyArrayObject *self,
             return NULL;
         }
         newd = PyArray_DescrNew(saved);
+        if (newd == NULL) {
+            Py_DECREF(new_name);
+            return NULL;
+        }
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
@@ -1440,6 +1444,10 @@ array_argsort(PyArrayObject *self,
             return NULL;
         }
         newd = PyArray_DescrNew(saved);
+        if (newd == NULL) {
+            Py_DECREF(new_name);
+            return NULL;
+        }
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
@@ -1497,6 +1505,10 @@ array_argpartition(PyArrayObject *self,
             return NULL;
         }
         newd = PyArray_DescrNew(saved);
+        if (newd == NULL) {
+            Py_DECREF(new_name);
+            return NULL;
+        }
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
@@ -2101,6 +2113,11 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 }
                 else {
                     fa->descr = PyArray_DescrNew(typecode);
+                    if (fa->descr == NULL) {
+                        Py_CLEAR(fa->mem_handler);
+                        Py_DECREF(rawdata);
+                        return NULL;
+                    }
                     if (PyArray_DESCR(self)->byteorder == NPY_BIG) {
                         PyArray_DESCR(self)->byteorder = NPY_LITTLE;
                     }
